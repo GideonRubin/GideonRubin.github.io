@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Reading App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/opendyslexic" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #0a0a0a;
+            --surface-color: #1a1a1a;
+            --text-color: #faf8f6;
+            --text-secondary: #b8b5b0;
+            --accent-color: #e8e6e3;
+            --border-color: #2a2a2a;
+            --shadow: rgba(0, 0, 0, 0.6);
+        }
+
+        [data-theme="light"] {
+            --bg-color: #faf8f6;
+            --surface-color: #ffffff;
+            --text-color: #1a1a1a;
+            --text-secondary: #666666;
+            --accent-color: #2a2a2a;
+            --border-color: #e8e6e3;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            font-weight: 300;
+        }
+
+        .container {
+            width: 100%;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Menu Toggle Button */
+        .menu-toggle {
+            position: fixed;
+            top: 40px;
+            left: 40px;
+            width: 48px;
+            height: 48px;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 8px 32px var(--shadow);
+            backdrop-filter: blur(20px);
+        }
+
+        .menu-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 48px var(--shadow);
+        }
+
+        .menu-toggle span {
+            display: block;
+            width: 20px;
+            height: 1px;
+            background: var(--text-color);
+            transition: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+        }
+
+        .menu-toggle span:before,
+        .menu-toggle span:after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 1px;
+            background: var(--text-color);
+            transition: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .menu-toggle span:before {
+            top: -6px;
+        }
+
+        .menu-toggle span:after {
+            top: 6px;
+        }
+
+        .menu-toggle.active span {
+            background: transparent;
+        }
+
+        .menu-toggle.active span:before {
+            transform: rotate(45deg);
+            top: 0;
+        }
+
+        .menu-toggle.active span:after {
+            transform: rotate(-45deg);
+            top: 0;
+        }
+
+        /* Floating Settings Panel */
+        .settings-panel {
+            position: fixed;
+            top: 50%;
+            left: 40px;
+            transform: translateY(-50%) translateX(-120%);
+            width: 340px;
+            max-height: 70vh;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 40px;
+            margin-right: 50px;
+            box-shadow: 0 32px 80px var(--shadow);
+            backdrop-filter: blur(40px);
+            z-index: 1000;
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            opacity: 0;
+            visibility: hidden;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) transparent;
+        }
+
+        /* Custom scrollbar for WebKit browsers */
+        .settings-panel::-webkit-scrollbar {
+            width: 2px;
+        }
+
+        .settings-panel::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 2px;
+            margin: -300px
+
+        }
+
+        .settings-panel::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
+            transition: background 0.3s ease;
+            min-height: 20px;
+        }
+
+        .settings-panel::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        .settings-panel.visible {
+            transform: translateY(-50%) translateX(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .settings-panel h2 {
+            margin-bottom: 36px;
+            color: var(--text-color);
+            font-size: 18px;
+            text-align: center;
+            font-weight: 200;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .setting-group {
+            margin-bottom: 32px;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 16px;
+            font-weight: 300;
+            color: var(--text-color);
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .range-slider {
+            width: 100%;
+            height: 1px;
+            border-radius: 0.5px;
+            background: var(--border-color);
+            outline: none;
+            margin-bottom: 16px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 6px 20px var(--shadow);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 8px 32px var(--shadow);
+        }
+
+        .range-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+
+        .range-value {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-align: center;
+            font-weight: 300;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        select {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 12px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(232, 230, 227, 0.1);
+        }
+
+        select option {
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .refresh-btn, .theme-toggle {
+            flex: 1;
+            padding: 16px;
+            background: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 24px;
+            font-size: 10px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .theme-toggle {
+            background: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .refresh-btn:hover, .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px var(--shadow);
+        }
+
+        /* Article Container */
+        .article-container {
+            padding: 120px 60px;
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-color);
+            min-height: 100vh;
+        }
+
+        .article {
+            line-height: 1.8;
+            color: var(--text-color);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            font-size: 16px;
+        }
+
+        .article h1 {
+            font-size: 3.2em;
+            margin-bottom: 32px;
+            color: var(--text-color);
+            line-height: 1.1;
+            font-weight: 200;
+            letter-spacing: -1px;
+        }
+
+        .article .meta {
+            color: var(--text-secondary);
+            font-style: normal;
+            margin-bottom: 48px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 300;
+            font-size: 12px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .article p {
+            margin-bottom: 28px;
+            color: var(--text-color);
+            font-weight: 300;
+        }
+
+        @media (max-width: 1024px) {
+            .settings-panel {
+                left: 20px;
+                width: 300px;
+                padding: 32px;
+            }
+            
+            .menu-toggle {
+                left: 20px;
+                top: 20px;
+            }
+            
+            .article-container {
+                padding: 80px 40px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .settings-panel {
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%) scale(0.8);
+                width: 90%;
+                max-width: 320px;
+            }
+            
+            .settings-panel.visible {
+                transform: translate(-50%, -50%) scale(1);
+            }
+            
+            .article-container {
+                padding: 60px 24px;
+            }
+            
+            .article h1 {
+                font-size: 2.4em;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="container" id="main-container">
+        <div class="menu-toggle" id="menu-toggle">
+            <span></span>
+        </div>
+        
+        <div class="settings-panel" id="settings-panel">
+            <h2>Settings</h2>
+            
+            <div class="setting-group">
+                <label for="font-size">Font Size</label>
+                <input type="range" id="font-size" class="range-slider" min="10" max="36" value="16" step="1">
+                <div class="range-value" id="font-size-value">16px</div>
+            </div>
+            
+            <div class="setting-group">
+                <label for="word-spacing">Word Spacing</label>
+                <input type="range" id="word-spacing" class="range-slider" min="0" max="20" value="0" step="1">
+                <div class="range-value" id="word-spacing-value">Normal</div>
+            </div>
+
+            <div class="setting-group">
+                <label for="letter-spacing">Letter Spacing</label>
+                <input type="range" id="letter-spacing" class="range-slider" min="0" max="10" value="0" step="0.5">
+                <div class="range-value" id="letter-spacing-value">Normal</div>
+            </div>
+
+            <div class="setting-group">
+                <label for="line-height">Line Height</label>
+                <input type="range" id="line-height" class="range-slider" min="1.2" max="2.4" value="1.8" step="0.1">
+                <div class="range-value" id="line-height-value">1.8</div>
+            </div>
+
+            <div class="setting-group">
+                <label for="boldness">Text Weight</label>
+                <input type="range" id="boldness" class="range-slider" min="200" max="600" value="300" step="100">
+                <div class="range-value" id="boldness-value">Light</div>
+            </div>
+
+            <div class="setting-group">
+                <label for="font-select">Font Family</label>
+                <select id="font-select">
+                    <option value="opensans">Open Sans</option>
+                    <option value="baskerville">New Baskerville</option>
+                    <option value="opendyslexic">OpenDyslexic</option>
+                </select>
+            </div>
+
+            <div class="control-buttons">
+                <button class="refresh-btn" id="refresh-btn">New Article</button>
+                <button class="theme-toggle" id="theme-toggle">Dark Mode</button>
+            </div>
+        </div>
+
+        <div class="article-container">
+            <article class="article" id="article-content">
+                <!-- Article content will be loaded here -->
+            </article>
+        </div>
+    </div>
+
+    <script>
+        // Fictional news articles data
+        const articleTemplates = [
+            {
+                headline: "Revolutionary Underwater City Opens to Tourists in Mediterranean",
+                author: "Marina Delmar",
+                date: "March 15, 2024",
+                content: [
+                    "The world's first fully sustainable underwater city, Aquatica, officially opened its doors to visitors yesterday, marking a historic milestone in marine architecture and tourism. Located 200 feet below the surface of the Mediterranean Sea, off the coast of Monaco, this engineering marvel has been five years in the making.",
+                    "Designed by renowned architect Dr. Elena Vasquez, Aquatica can house up to 1,000 residents and accommodate 500 daily visitors. The city features transparent aluminum domes that provide breathtaking 360-degree views of marine life, while maintaining complete safety and comfort for its inhabitants. The construction process involved the most advanced underwater engineering techniques ever attempted, with specialized robots and human divers working in perfect harmony.",
+                    "The city's infrastructure is entirely powered by a combination of geothermal energy from underwater vents and advanced tidal generators. 'We've created a completely self-sustaining ecosystem,' explains Dr. Vasquez. 'Every drop of water is recycled, every bit of waste is processed, and we even grow our own food in hydroponic gardens.' The energy systems are so efficient that Aquatica actually produces a surplus of clean energy, which is transmitted to coastal cities through underwater cables.",
+                    "Visitors can explore the city's five distinct districts, each offering unique experiences and insights into underwater living. The Research Quarter houses cutting-edge marine biology laboratories where scientists conduct groundbreaking studies on ocean ecosystems and climate change. Here, visitors can observe researchers working with bioluminescent organisms, studying coral regeneration techniques, and developing new methods for ocean cleanup.",
+                    "The Residential Area features luxurious apartments with floor-to-ceiling transparent walls offering unobstructed ocean views. Each living space is equipped with advanced life support systems, emergency protocols, and communication networks that connect residents to the surface world. The architecture seamlessly blends functionality with beauty, creating spaces that feel both futuristic and naturally integrated with the marine environment.",
+                    "The Cultural Center represents a triumph of underwater engineering, housing the world's first underwater theater and art gallery. The theater's acoustics have been specially designed to work in the underwater environment, creating an otherworldly experience for performances. The art gallery showcases works created specifically for the underwater environment, including sculptures that interact with marine life and installations that change with the tides.",
+                    "The Commercial District features restaurants serving cuisine from locally farmed seaweed and sustainably caught fish, alongside shops selling unique underwater-crafted goods. The culinary experience in Aquatica is revolutionary, with chefs developing entirely new cooking techniques that work in the pressurized environment. Specialty dishes include kelp pasta, sea vegetable salads, and fish prepared using geothermal vents.",
+                    "The Observatory serves as the crown jewel of Aquatica, equipped with state-of-the-art equipment for deep-sea exploration and research. Massive viewing windows offer panoramic views of the ocean floor, while advanced sonar and imaging systems allow visitors to explore the deepest parts of the Mediterranean. The facility also serves as a communication hub, maintaining constant contact with research stations around the world.",
+                    "The transportation system within Aquatica consists of pressurized tubes that use water currents to move people and goods efficiently throughout the city. The system is both environmentally friendly and remarkably fast, allowing residents and visitors to travel from one end of the city to the other in just minutes. Emergency evacuation systems ensure that everyone can reach the surface safely within ten minutes if necessary.",
+                    "Environmental groups have praised the project for its minimal impact on marine ecosystems. The construction process involved relocating over 10,000 fish to safe habitats and creating artificial reefs that have actually increased biodiversity in the area by 30%. Marine biologists report that the city has become a thriving hub for sea life, with many species using the structures as breeding grounds and shelter."
+                ]
+            },
+            {
+                headline: "Time Capsule from 1887 Reveals Advanced Victorian Technology",
+                author: "Professor Charles Whitmore",
+                date: "April 2, 2024",
+                content: [
+                    "A construction crew renovating the basement of Edinburgh's Royal Observatory has uncovered a remarkable time capsule that challenges our understanding of Victorian-era technological capabilities. The copper container, sealed in 1887, contained blueprints and prototypes for devices that seem impossibly advanced for their time, suggesting that Victorian inventors were far more capable than history books have led us to believe.",
+                    "Among the most extraordinary discoveries was a working prototype of what appears to be an early computer, constructed entirely from brass gears and clockwork mechanisms. The device, created by inventor Ambrose Fitzpatrick, could perform complex mathematical calculations, store data on perforated metal cards, and even execute simple programs. The precision of the mechanical engineering rivals that of modern Swiss watches, with some components so small they required magnification to fully appreciate.",
+                    "Dr. Sarah Mitchell, lead historian on the project, describes the find as 'revolutionary.' The time capsule also contained detailed plans for electric vehicles with regenerative braking systems, wireless communication devices that predate Marconi's radio by decades, and what Fitzpatrick called 'mechanical birds' - essentially early drone designs powered by spring mechanisms and guided by gyroscopic systems that demonstrate an understanding of aerodynamics decades ahead of the Wright brothers.",
+                    "Personal letters found alongside the inventions reveal that Fitzpatrick was part of a secret society of inventors known as 'The Cogwheel Collective.' This group, comprised of brilliant minds from across Europe, shared ideas and collaborated on projects far ahead of their time through an encrypted correspondence network. They chose to seal their work, believing society wasn't ready for such advances, fearing the social and economic disruption these technologies might cause.",
+                    "The wireless communication device, remarkably, still functions after 137 years. When activated by the research team, it successfully transmitted Morse code signals across the laboratory and even picked up modern radio broadcasts when properly tuned. The device operates on principles similar to early radio, but uses a unique crystalline component that historians have been unable to identify. Analysis suggests it may be a naturally occurring mineral with properties that weren't scientifically documented until the 20th century.",
+                    "Perhaps most intriguing is Fitzpatrick's personal journal, which details his philosophical concerns about rapid technological progress. 'I fear we may create more than we can control,' he wrote in elegant Victorian script. 'Perhaps future generations will be wiser in the application of these tools than we could be today.' His writings reveal a deep understanding of the potential consequences of technological advancement, including environmental concerns and social inequality that wouldn't become mainstream issues for another century.",
+                    "The electric vehicle blueprints show a design remarkably similar to modern electric cars, complete with regenerative braking systems and efficient battery arrangements using an early form of lithium compounds. If built according to these plans in 1887, it would have had a range of approximately 100 miles on a single charge - comparable to early modern electric vehicles. The designs also include detailed studies of aerodynamics and weight distribution that wouldn't be formally developed by automotive engineers until the mid-20th century.",
+                    "Additional discoveries include plans for solar panels using selenium cells, water purification systems that rival modern technology, and architectural designs for buildings that would later be called 'green' or 'sustainable.' One particularly fascinating document describes a method for creating artificial diamonds using high pressure and heat - a process that wouldn't be successfully achieved until the 1950s. The precision and detail of these plans suggest they weren't mere theoretical exercises but were based on actual experimentation and testing.",
+                    "The Royal Observatory plans to create a permanent exhibition featuring these discoveries, with working replicas being built by modern craftsmen using period-appropriate materials and techniques. Several of Fitzpatrick's designs have already been successfully recreated, proving their viability and effectiveness. The exhibition will explore not only the technical achievements but also the philosophical questions raised by Fitzpatrick's work about the relationship between technological progress and social responsibility.",
+                    "This discovery raises profound questions about the nature of invention and progress. Were Victorian inventors more capable than we assumed, or did this particular group simply possess extraordinary vision? The time capsule serves as a humbling reminder that human ingenuity has always pushed the boundaries of what seems possible, and that perhaps our ancestors were not as different from us as we might think."
+                ]
+            },
+            {
+                headline: "Desert Bloom Phenomenon Creates Temporary Rainbow Valley in Sahara",
+                author: "Dr. Amira Hassan",
+                date: "May 18, 2024",
+                content: [
+                    "An unprecedented meteorological event has transformed a 50-square-mile section of the Sahara Desert into a kaleidoscope of colors, creating what locals are calling 'Rainbow Valley.' The phenomenon began three weeks ago following an unusual series of atmospheric conditions that scientists are still struggling to fully understand, representing one of the most spectacular natural displays ever recorded in the region.",
+                    "The spectacular display started when rare cloud formations, the result of a unique convergence of high and low-pressure systems, released mineral-rich rain onto the desert sands. This rainfall, combined with underground thermal activity and unique light refraction caused by atmospheric pressure changes, has created flowing rivers of colored sand that shift and move like liquid rainbows across the landscape, defying conventional understanding of desert physics.",
+                    "Dr. Klaus Zimmerman, an atmospheric physicist from the University of Berlin, has established a comprehensive research camp in the area. 'The sand particles are being charged by the interaction of moisture, heat, and electromagnetic fields generated by the underground thermal vents,' he explains. 'This creates a piezoelectric effect that causes the grains to emit different wavelengths of light.' The phenomenon represents a rare natural occurrence of photoluminescence in geological materials.",
+                    "The colors range from deep purples and blues in the early morning, when the atmospheric pressure is highest, to brilliant golds and reds during sunset, when thermal activity reaches its peak. Local Tuareg guides report that the patterns change hourly, creating new configurations that have never been seen before. Some formations resemble flowing rivers that stretch for miles, while others create spiral patterns and geometric shapes that appear almost artificially designed but are entirely natural.",
+                    "The phenomenon has attracted scientists from around the world, as well as photographers, artists, and adventurers seeking to witness this rare natural spectacle. However, access is strictly limited to protect both visitors and the delicate environmental conditions that create the display. The Moroccan government has established a temporary research zone with controlled viewing areas, allowing scientific study while minimizing human impact on the phenomenon.",
+                    "Geologist Dr. Maria Santos has discovered that the colored sands contain microscopic organisms that have been dormant for thousands of years. The recent moisture and heat have awakened these organisms, which emit bioluminescent proteins as part of their metabolic processes. 'We're seeing evolution in real-time,' she notes. 'These organisms are adapting to conditions that haven't existed in this region for millennia.' The discovery has implications for astrobiology and the search for life on other planets.",
+                    "Local communities have been both amazed and concerned by the transformation. Elder Amellal ag Mohamed of the Tuareg people sees the phenomenon as a spiritual message. 'The desert is showing us its hidden beauty,' he says. 'But it is also a warning about the changing world.' Traditional navigation methods, which rely on familiar landmarks and sand patterns, have been disrupted by the colorful display, requiring guides to adapt their ancient techniques.",
+                    "Environmental monitoring stations have detected no harmful effects from the phenomenon, but scientists warn that the display is likely temporary. Computer models suggest that Rainbow Valley will gradually fade over the next two to three months as the atmospheric conditions stabilize and the underground thermal activity decreases. However, the dormant organisms may remain active longer, potentially creating smaller displays for years to come.",
+                    "Tourism agencies are working with local governments to establish controlled viewing tours that minimize environmental impact while allowing people to witness this once-in-a-lifetime natural event. The economic impact on nearby communities has already been significant, with some remote villages seeing their first tourists in decades. Local artisans have begun creating crafts inspired by the colorful patterns, helping to preserve the memory of the phenomenon for future generations.",
+                    "Researchers are documenting every aspect of Rainbow Valley using advanced imaging technology, drone surveys, and time-lapse photography, knowing that such conditions may never align again in human history. The data collected here could revolutionize our understanding of desert ecosystems, atmospheric physics, and dormant life forms for generations to come. The phenomenon serves as a reminder of the Earth's capacity for unexpected beauty and the importance of protecting our planet's diverse environments."
+                ]
+            },
+            {
+                headline: "Floating Gardens Revolution Solves Urban Food Crisis",
+                author: "Isabella Rodriguez",
+                date: "June 8, 2024",
+                content: [
+                    "The city of Amsterdam has successfully implemented its ambitious floating garden program, creating over 200 hydroponic farms that drift along the city's historic canals. These innovative agricultural installations are now producing 40% of the city's fresh vegetables while reducing transportation costs and carbon emissions, representing a revolutionary approach to urban food security that other cities around the world are eager to replicate.",
+                    "The brainchild of urban planner Dr. Henrik Van Der Berg, the floating gardens use a combination of ancient Dutch water management techniques and cutting-edge modern technology. Each garden consists of a buoyant platform supporting raised beds filled with nutrient-rich growing medium, all powered by solar panels and managed by automated irrigation systems that monitor and adjust water and nutrient levels in real-time.",
+                    "The gardens rotate slowly throughout the day, guided by underwater current systems, ensuring optimal sun exposure for crops while creating a mesmerizing sight for tourists and residents alike. Automated sensors monitor water quality, nutrient levels, plant health, and weather conditions, sending real-time data to a central control center where agricultural specialists and AI systems work together to make micro-adjustments that optimize growing conditions.",
+                    "'We've essentially created a living ecosystem that moves with the natural flow of the city,' explains Dr. Van Der Berg. 'The gardens not only produce food but also help purify the canal water and provide habitat for local fish and bird species.' The symbiotic relationship between the floating farms and the aquatic environment has created a thriving ecosystem that benefits both human inhabitants and local wildlife.",
+                    "The economic impact has been substantial and far-reaching. Local restaurants now source 60% of their produce from canal gardens, often purchasing vegetables that were harvested the same morning. This has led to a renaissance in Amsterdam's culinary scene, with chefs creating innovative seasonal menus that change based on what's currently growing on the water. The freshness and quality of the produce has attracted food critics and culinary tourists from around the world.",
+                    "Residents can lease small garden plots for personal use, creating a sense of community ownership and connection to food production. Children from local schools participate in educational programs, learning about sustainable agriculture, nutrition, and environmental science while helping tend the floating crops. The initiative has reduced youth unemployment by 15% as young people find work in this new green economy, developing skills in agriculture, technology, and environmental management.",
+                    "Environmental scientists from around the world are studying Amsterdam's success, documenting how the floating gardens have increased local biodiversity by 25%, created natural cooling zones that reduce urban heat island effects, and established a model for climate-resilient food production that can adapt to rising sea levels. The gardens serve as natural flood management systems, absorbing excess water during heavy rains and releasing it during dry periods.",
+                    "The technology behind the floating gardens is remarkably sophisticated yet elegantly simple. Advanced materials science has created lightweight, durable platforms that can withstand harsh weather while supporting substantial weight. Hydroponic systems optimize nutrient delivery, while integrated sensors monitor everything from soil acidity to pest populations. Solar panels not only power the systems but can also feed excess energy back into the city grid.",
+                    "Plans are underway to expand the program to other Dutch cities and eventually create a network of floating farms connected by waterways throughout the Netherlands. The Dutch government has allocated €50 million to support similar projects in coastal cities worldwide, positioning the Netherlands as a global leader in adaptive agriculture. International delegations visit Amsterdam monthly to study the program and adapt its principles to their own urban environments.",
+                    "The success of Amsterdam's floating gardens demonstrates that innovative thinking about food production can address multiple urban challenges simultaneously. As climate change and urbanization continue to pressure traditional agricultural systems, solutions like floating gardens offer hope for sustainable, resilient food security that works in harmony with natural systems rather than against them."
+                ]
+            },
+            {
+                headline: "Artificial Aurora Creates Permanent Light Show Over Northern Canada",
+                author: "Dr. Yuki Tanaka",
+                date: "July 22, 2024",
+                content: [
+                    "Scientists at the International Space Research Consortium have successfully created the world's first artificial aurora borealis, painting the night sky over Hudson Bay with controllable patterns of green, blue, and red light that dance continuously across the horizon. This groundbreaking achievement represents years of research into atmospheric physics and electromagnetic manipulation, creating a phenomenon that rivals the natural northern lights in beauty while surpassing them in reliability and control.",
+                    "The project, known as 'Aurora Perpetua,' uses a network of high-altitude balloons equipped with particle accelerators to recreate the natural process that creates northern lights. Unlike natural auroras, which depend on unpredictable solar wind activity and Earth's magnetic field fluctuations, this artificial version can be controlled and programmed to create specific patterns, colors, and intensities on command, operating regardless of solar activity or weather conditions.",
+                    "Dr. Elena Volkov, the project's lead physicist, explains the complex technology: 'We've essentially miniaturized the interaction between solar particles and Earth's magnetosphere. Our balloons release controlled streams of charged particles into the upper atmosphere, where they collide with oxygen and nitrogen molecules to create the light display.' The system requires precise coordination between multiple balloons and ground-based control systems to maintain the spectacular display.",
+                    "The artificial aurora has been operational for three months, creating a permanent tourist attraction that has transformed the remote region of northern Manitoba into an unexpected global destination. The town of Churchill, with a population of just 900, now hosts over 2,000 visitors monthly, completely revitalizing the local economy and bringing new life to a community that had struggled with economic decline for decades.",
+                    "Local indigenous communities initially expressed concerns about the project's impact on traditional beliefs and wildlife migration patterns. However, extensive environmental monitoring has shown no negative effects on local ecosystems, and many community members have embraced the project. In fact, the increased electromagnetic activity has improved radio communications in the region, benefiting both residents and researchers working in the remote Arctic.",
+                    "The light show operates on a sophisticated 24-hour cycle, with different patterns scheduled throughout the night based on astronomical events, seasonal changes, and special occasions. Monday nights feature cascading waterfalls of light that seem to pour from the stars, Wednesdays showcase spiraling vortexes that dance across the entire sky, and weekends present elaborate geometric patterns synchronized to classical music broadcast on local radio stations.",
+                    "'It's like having a permanent painting in the sky,' says Sarah Beargrease, a member of the local Cree First Nation who now runs aurora tours for visitors. 'Our ancestors would have seen this as a bridge between the physical and spirit worlds. In a way, science has made their vision a reality.' The artificial aurora has become a source of cultural pride and economic opportunity for indigenous communities in the region.",
+                    "The success of Aurora Perpetua has sparked interest from cities worldwide, with requests for similar installations coming from locations as diverse as northern Scotland, Patagonia, and Siberia. Plans are in development for smaller-scale versions that could create light displays over major urban centers during special celebrations, though concerns about light pollution and energy consumption remain significant challenges that researchers are working to address.",
+                    "Future developments may include interactive displays where audiences can influence the aurora patterns through smartphone apps, virtual reality integrations that allow people to experience the aurora from impossible perspectives, and themed shows tied to holidays, cultural events, or scientific milestones. The project represents a unique fusion of cutting-edge physics and artistic expression that has captured imaginations globally.",
+                    "The implications of Aurora Perpetua extend beyond tourism and entertainment. The technology has applications in atmospheric research, climate science, and space weather prediction. By creating controlled conditions in the upper atmosphere, scientists can study phenomena that are difficult to observe in natural settings, potentially leading to breakthroughs in our understanding of Earth's relationship with space weather and climate systems."
+                ]
+            },
+            {
+                headline: "Underground Mushroom Metropolis Discovered Beneath Tokyo",
+                author: "Professor Kenji Nakamura",
+                date: "August 14, 2024",
+                content: [
+                    "Construction workers extending Tokyo's subway system have uncovered an extraordinary underground ecosystem spanning over 15 miles of tunnels beneath the city. The discovery reveals a vast network of bioluminescent fungi that has been quietly growing in the subway infrastructure for decades, creating what researchers are calling the most significant biological discovery in urban environments in the 21st century.",
+                    "The fungal network, dubbed 'Myco-Tokyo' by researchers, consists of over 50 previously unknown species of mushrooms that glow in brilliant blues, greens, and purples. These organisms have adapted to thrive in the unique environment created by subway vibrations, electrical fields, and the constant flow of warm, humid air. The diversity and complexity of this underground ecosystem rivals that of natural forest systems, but with species found nowhere else on Earth.",
+                    "Dr. Akiko Sato, a mycologist leading the research team, describes the discovery as 'revolutionary.' The fungi appear to have developed a remarkable symbiotic relationship with Tokyo's infrastructure, actually strengthening concrete foundations through biochemical processes while filtering air and processing organic waste that seeps down from the surface. The organisms have essentially become part of the city's living infrastructure, contributing to its stability and functionality.",
+                    "Most remarkably, the fungal network demonstrates sophisticated communication capabilities that rival those found in natural forest ecosystems. Researchers have detected electrical pulses traveling through the mycelium at speeds approaching nerve transmission in animals. The entire system seems to function as a massive underground 'brain' that responds to changes in the subway schedule, passenger traffic patterns, and even seismic activity with surprising accuracy and speed.",
+                    "'We believe the fungi can predict train delays with 95% accuracy,' explains Dr. Sato. 'They somehow sense disruptions in the electrical and vibration patterns and react before the subway operators are even aware of problems. It's as if the city has grown its own nervous system.' This predictive capability has intrigued computer scientists and urban planners, who see potential applications in smart city technology.",
+                    "The discovery has profound implications for urban planning, biotechnology, and our understanding of how life adapts to artificial environments. The fungi process approximately 10 tons of organic waste daily, converting it into nutrients that support the entire underground ecosystem. Several species appear to break down pollutants and purify groundwater, effectively creating a natural filtration system beneath one of the world's largest cities.",
+                    "Tokyo Metropolitan Government has suspended construction in affected areas while scientists study the ecosystem, recognizing that this discovery could revolutionize urban environmental management. Preliminary plans call for creating observation windows in select subway stations, allowing commuters to view the glowing fungal gardens during their daily journeys, potentially transforming the daily commute into an educational and aesthetic experience.",
+                    "Biotechnology companies are racing to understand the fungi's unique properties, which appear to have applications far beyond urban infrastructure. Early research suggests potential uses in waste processing, sustainable architecture, biofuel production, and even computing systems based on biological networks. The organisms' bioluminescence could eventually provide energy-efficient lighting for underground spaces worldwide, reducing the environmental impact of urban transportation systems.",
+                    "Environmental groups have called for permanent protection of Myco-Tokyo, arguing that it represents a new model for urban ecology where human infrastructure and natural systems integrate seamlessly. The discovery challenges fundamental assumptions about the boundaries between built and natural environments in modern cities, suggesting that nature is more adaptable and innovative than previously imagined.",
+                    "The implications extend beyond Tokyo, as similar fungal networks may exist in subway systems worldwide. Research teams are now investigating underground infrastructure in New York, London, Paris, and other major cities, looking for evidence of similar biological adaptations. The discovery of Myco-Tokyo may be just the beginning of recognizing the hidden biological complexity that exists within our urban environments."
+                ]
+            }
+        ];
+
+        // Current theme - start in light mode
+        let currentTheme = 'light';
+
+        // Settings functionality
+        function updateFontSize() {
+            const value = document.getElementById('font-size').value;
+            const article = document.getElementById('article-content');
+            article.style.setProperty('font-size', value + 'px', 'important');
+            document.getElementById('font-size-value').textContent = value + 'px';
+        }
+
+        function updateWordSpacing() {
+            const value = document.getElementById('word-spacing').value;
+            const article = document.getElementById('article-content');
+            article.style.setProperty('word-spacing', value + 'px', 'important');
+            document.getElementById('word-spacing-value').textContent = value === '0' ? 'Normal' : `+${value}px`;
+        }
+
+        function updateLetterSpacing() {
+            const value = document.getElementById('letter-spacing').value;
+            const article = document.getElementById('article-content');
+            article.style.setProperty('letter-spacing', value + 'px', 'important');
+            document.getElementById('letter-spacing-value').textContent = value === '0' ? 'Normal' : `+${value}px`;
+        }
+
+        function updateLineHeight() {
+            const value = document.getElementById('line-height').value;
+            const article = document.getElementById('article-content');
+            article.style.setProperty('line-height', value, 'important');
+            document.getElementById('line-height-value').textContent = value;
+        }
+
+        function updateBoldness() {
+            const value = document.getElementById('boldness').value;
+            const article = document.getElementById('article-content');
+            
+            // Apply font weight to the main article container
+            article.style.setProperty('font-weight', value, 'important');
+            
+            // Apply font weight to all text elements within the article
+            const textElements = article.querySelectorAll('h1, h2, h3, h4, h5, h6, p, .meta');
+            textElements.forEach(element => {
+                element.style.setProperty('font-weight', value, 'important');
+            });
+            
+            const labels = {
+                '200': 'Thin',
+                '300': 'Light',
+                '400': 'Normal',
+                '500': 'Medium',
+                '600': 'Semi-Bold'
+            };
+            
+            document.getElementById('boldness-value').textContent = labels[value] || value;
+        }
+
+        function updateFont() {
+            const value = document.getElementById('font-select').value;
+            const article = document.getElementById('article-content');
+            
+            switch(value) {
+                case 'opensans':
+                    article.style.setProperty('font-family', '"Open Sans", -apple-system, BlinkMacSystemFont, sans-serif', 'important');
+                    break;
+                case 'baskerville':
+                    article.style.setProperty('font-family', '"Baskerville", "New Baskerville", "Times New Roman", serif', 'important');
+                    break;
+                case 'opendyslexic':
+                    article.style.setProperty('font-family', '"OpenDyslexic", "Comic Sans MS", cursive, sans-serif', 'important');
+                    break;
+            }
+        }
+
+        // Menu toggle functionality
+        function toggleMenu() {
+            const panel = document.getElementById('settings-panel');
+            const toggle = document.getElementById('menu-toggle');
+            
+            panel.classList.toggle('visible');
+            toggle.classList.toggle('active');
+        }
+
+        // Theme toggle functionality
+        function toggleTheme() {
+            const body = document.body;
+            const button = document.getElementById('theme-toggle');
+            
+            if (currentTheme === 'dark') {
+                body.setAttribute('data-theme', 'light');
+                button.textContent = 'Dark Mode';
+                currentTheme = 'light';
+            } else {
+                body.removeAttribute('data-theme');
+                button.textContent = 'Light Mode';
+                currentTheme = 'dark';
+            }
+        }
+
+        function generateNewArticle() {
+            const randomIndex = Math.floor(Math.random() * articleTemplates.length);
+            const article = articleTemplates[randomIndex];
+            
+            const articleElement = document.getElementById('article-content');
+            
+            let content = `
+                <h1>${article.headline}</h1>
+                <div class="meta">By ${article.author} | ${article.date}</div>
+            `;
+            
+            article.content.forEach(paragraph => {
+                content += `<p>${paragraph}</p>`;
+            });
+            
+            articleElement.innerHTML = content;
+            
+            // Reapply current settings to the new content
+            updateFontSize();
+            updateWordSpacing();
+            updateLetterSpacing();
+            updateLineHeight();
+            updateBoldness();
+            updateFont();
+        }
+
+        // Event listeners
+        document.getElementById('font-size').addEventListener('input', updateFontSize);
+        document.getElementById('word-spacing').addEventListener('input', updateWordSpacing);
+        document.getElementById('letter-spacing').addEventListener('input', updateLetterSpacing);
+        document.getElementById('line-height').addEventListener('input', updateLineHeight);
+        document.getElementById('boldness').addEventListener('input', updateBoldness);
+        document.getElementById('font-select').addEventListener('change', updateFont);
+        document.getElementById('menu-toggle').addEventListener('click', toggleMenu);
+        document.getElementById('refresh-btn').addEventListener('click', generateNewArticle);
+        document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const panel = document.getElementById('settings-panel');
+            const toggle = document.getElementById('menu-toggle');
+            
+            if (!panel.contains(event.target) && !toggle.contains(event.target) && panel.classList.contains('visible')) {
+                toggleMenu();
+            }
+        });
+
+        // Prevent menu scroll from propagating to page
+        document.getElementById('settings-panel').addEventListener('wheel', function(event) {
+            const panel = this;
+            const scrollTop = panel.scrollTop;
+            const scrollHeight = panel.scrollHeight;
+            const clientHeight = panel.clientHeight;
+            const wheelDelta = event.deltaY;
+
+            if ((wheelDelta > 0 && scrollTop + clientHeight >= scrollHeight) || 
+                (wheelDelta < 0 && scrollTop <= 0)) {
+                event.preventDefault();
+            }
+        });
+
+        // Initialize with first article and apply default settings
+        generateNewArticle();
+    </script>
+</body>
+</html>
