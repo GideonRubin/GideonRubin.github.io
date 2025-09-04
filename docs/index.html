@@ -312,6 +312,7 @@
             color: var(--text-color);
             transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             font-size: 16px;
+            margin-bottom: 750px;
         }
 
         .article h1 {
@@ -341,6 +342,29 @@
             font-weight: 300;
         }
 
+        /* Focus overlay styles - creates spotlight effect */
+        .focus-overlay-top,
+        .focus-overlay-bottom {
+            position: fixed;
+            left: 0;
+            right: 0;
+            pointer-events: none;
+            z-index: 10;
+            transition: opacity 0.3s ease-out;
+            opacity: 0;
+            background: rgba(0, 0, 0, 1);
+        }
+
+        .focus-overlay-top.active,
+        .focus-overlay-bottom.active {
+            opacity: 1;
+        }
+
+        /* Ensure article content is positioned properly for focus calculations */
+        .article-container {
+            position: relative;
+        }
+
         @media (max-width: 1024px) {
             .settings-panel {
                 left: 20px;
@@ -365,10 +389,44 @@
                 transform: translate(-50%, -50%) scale(0.8);
                 width: 90%;
                 max-width: 320px;
+                max-height: 60vh;
+                padding: 24px;
             }
             
             .settings-panel.visible {
                 transform: translate(-50%, -50%) scale(1);
+            }
+            
+            .settings-panel h2 {
+                margin-bottom: 20px;
+                font-size: 16px;
+            }
+            
+            .setting-group {
+                margin-bottom: 20px;
+            }
+            
+            .setting-group label {
+                margin-bottom: 10px;
+                font-size: 11px;
+            }
+            
+            .range-slider {
+                margin-bottom: 8px;
+            }
+            
+            select {
+                padding: 12px;
+                font-size: 11px;
+            }
+            
+            .control-buttons {
+                margin-top: 20px;
+            }
+            
+            .refresh-btn, .theme-toggle {
+                padding: 12px;
+                font-size: 9px;
             }
             
             .article-container {
@@ -383,6 +441,9 @@
 </head>
 <body data-theme="light">
     <div class="container" id="main-container">
+        <div class="focus-overlay-top" id="focus-overlay-top"></div>
+        <div class="focus-overlay-bottom" id="focus-overlay-bottom"></div>
+        
         <div class="menu-toggle" id="menu-toggle">
             <span></span>
         </div>
@@ -427,6 +488,32 @@
                     <option value="baskerville">New Baskerville</option>
                     <option value="opendyslexic">OpenDyslexic</option>
                 </select>
+            </div>
+
+            <div class="setting-group">
+                <label for="focus-mode">Focus Mode</label>
+                <select id="focus-mode">
+                    <option value="off">Off</option>
+                    <option value="on">On</option>
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <label for="focus-intensity">Dimming Intensity</label>
+                <input type="range" id="focus-intensity" class="range-slider" min="0" max="100" value="30" step="5">
+                <div class="range-value" id="focus-intensity-value">30%</div>
+            </div>
+
+            <div class="setting-group">
+                <label for="focus-position">Focus Position</label>
+                <input type="range" id="focus-position" class="range-slider" min="10" max="90" value="30" step="5">
+                <div class="range-value" id="focus-position-value">Center</div>
+            </div>
+
+            <div class="setting-group">
+                <label for="focus-height">Focus Height</label>
+                <input type="range" id="focus-height" class="range-slider" min="1" max="15" value="3" step="1">
+                <div class="range-value" id="focus-height-value">3 Lines</div>
             </div>
 
             <div class="control-buttons">
@@ -552,6 +639,13 @@
         // Current theme - start in light mode
         let currentTheme = 'light';
 
+        // Focus mode variables
+        let focusMode = 'off';
+        let focusIntensity = 30;
+        let focusPosition = 30;
+        let focusHeight = 3;
+        let isScrolling = false;
+
         // Settings functionality
         function updateFontSize() {
             const value = document.getElementById('font-size').value;
@@ -622,6 +716,108 @@
             }
         }
 
+        // Focus mode functionality
+        function updateFocusMode() {
+            focusMode = document.getElementById('focus-mode').value;
+            updateFocusDisplay();
+        }
+
+        function updateFocusIntensity() {
+            focusIntensity = document.getElementById('focus-intensity').value;
+            document.getElementById('focus-intensity-value').textContent = focusIntensity + '%';
+            updateFocusDisplay();
+        }
+
+        function updateFocusPosition() {
+            focusPosition = parseInt(document.getElementById('focus-position').value);
+            let label;
+            if (focusPosition <= 20) label = 'Top';
+            else if (focusPosition >= 80) label = 'Bottom';
+            else if (focusPosition === 50) label = 'Center';
+            else if (focusPosition < 50) label = 'Upper';
+            else label = 'Lower';
+            document.getElementById('focus-position-value').textContent = label;
+            updateFocusDisplay();
+        }
+
+        function updateFocusHeight() {
+            focusHeight = parseInt(document.getElementById('focus-height').value);
+            const label = focusHeight === 1 ? '1 Line' : `${focusHeight} Lines`;
+            document.getElementById('focus-height-value').textContent = label;
+            updateFocusDisplay();
+        }
+
+        function updateFocusDisplay() {
+            const overlayTop = document.getElementById('focus-overlay-top');
+            const overlayBottom = document.getElementById('focus-overlay-bottom');
+            
+            if (focusMode === 'off') {
+                overlayTop.classList.remove('active');
+                overlayBottom.classList.remove('active');
+                return;
+            }
+
+            // Calculate position and show overlays based on current scroll
+            if (focusMode === 'on') {
+                positionFocusOverlay();
+            }
+        }
+
+        function positionFocusOverlay() {
+            if (focusMode === 'off') return;
+
+            const overlayTop = document.getElementById('focus-overlay-top');
+            const overlayBottom = document.getElementById('focus-overlay-bottom');
+            
+            // Get viewport dimensions
+            const viewportHeight = window.innerHeight;
+            
+            // Calculate static focus area position based on settings
+            const focusCenterY = (focusPosition / 100) * viewportHeight;
+            
+            // Get line height from article content if available
+            const article = document.getElementById('article-content');
+            const firstParagraph = article.querySelector('p');
+            let lineHeight = 24; // Default fallback
+            
+            if (firstParagraph) {
+                const computedStyle = getComputedStyle(firstParagraph);
+                const computedLineHeight = parseFloat(computedStyle.lineHeight);
+                const fontSize = parseFloat(computedStyle.fontSize);
+                lineHeight = computedLineHeight || fontSize * 1.5;
+            }
+            
+            const totalFocusHeight = lineHeight * focusHeight;
+            
+            // Calculate the clear area (focus area) boundaries
+            const focusTop = focusCenterY - (totalFocusHeight / 2);
+            const focusBottom = focusCenterY + (totalFocusHeight / 2);
+            
+            // Calculate opacity based on intensity (0-100%)
+            const opacity = focusIntensity / 100;
+            
+            // Position and style top overlay
+            overlayTop.style.top = '0';
+            overlayTop.style.height = Math.max(0, focusTop) + 'px';
+            overlayTop.style.opacity = opacity;
+            
+            // Position and style bottom overlay
+            overlayBottom.style.top = focusBottom + 'px';
+            overlayBottom.style.height = Math.max(0, viewportHeight - focusBottom) + 'px';
+            overlayBottom.style.opacity = opacity;
+            
+            // Show overlays
+            overlayTop.classList.add('active');
+            overlayBottom.classList.add('active');
+        }
+
+        function handleScroll() {
+            if (focusMode === 'off') return;
+
+            // For static focus mode, we only need to update on window resize
+            // The focus area doesn't move with content, so no scroll updates needed
+        }
+
         // Menu toggle functionality
         function toggleMenu() {
             const panel = document.getElementById('settings-panel');
@@ -671,6 +867,11 @@
             updateLineHeight();
             updateBoldness();
             updateFont();
+            
+            // Update focus display for new content
+            setTimeout(() => {
+                updateFocusDisplay();
+            }, 100);
         }
 
         // Event listeners
@@ -680,9 +881,20 @@
         document.getElementById('line-height').addEventListener('input', updateLineHeight);
         document.getElementById('boldness').addEventListener('input', updateBoldness);
         document.getElementById('font-select').addEventListener('change', updateFont);
+        document.getElementById('focus-mode').addEventListener('change', updateFocusMode);
+        document.getElementById('focus-intensity').addEventListener('input', updateFocusIntensity);
+        document.getElementById('focus-position').addEventListener('input', updateFocusPosition);
+        document.getElementById('focus-height').addEventListener('input', updateFocusHeight);
         document.getElementById('menu-toggle').addEventListener('click', toggleMenu);
         document.getElementById('refresh-btn').addEventListener('click', generateNewArticle);
         document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+        
+        // Window resize listener for focus mode
+        window.addEventListener('resize', () => {
+            if (focusMode === 'on') {
+                updateFocusDisplay();
+            }
+        });
 
         // Close menu when clicking outside
         document.addEventListener('click', function(event) {
