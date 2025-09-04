@@ -6,6 +6,7 @@
     <title>Text Reading App</title>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.cdnfonts.com/css/opendyslexic" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -116,6 +117,33 @@
             top: 0;
         }
 
+        /* Theme Toggle Button */
+        .theme-toggle-btn {
+            position: fixed;
+            top: 40px;
+            right: 40px;
+            width: 48px;
+            height: 48px;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 8px 32px var(--shadow);
+            backdrop-filter: blur(20px);
+            color: var(--text-color);
+            font-size: 20px;
+        }
+
+        .theme-toggle-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 48px var(--shadow);
+        }
+
         /* Floating Settings Panel */
         .settings-panel {
             position: fixed;
@@ -126,13 +154,13 @@
             max-height: 70vh;
             background: var(--surface-color);
             border: 1px solid var(--border-color);
-            border-radius: 5px;
+            border-radius: 9px;
             padding: 40px;
             margin-right: 50px;
             box-shadow: 0 32px 80px var(--shadow);
             backdrop-filter: blur(40px);
             z-index: 1000;
-            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             opacity: 0;
             visibility: hidden;
             overflow-y: auto;
@@ -177,10 +205,16 @@
             font-weight: 200;
             letter-spacing: 0.8px;
             text-transform: uppercase;
+            background: var(--surface-color);
+            padding: 20px;
+            border-radius: 8px;
         }
 
         .setting-group {
             margin-bottom: 32px;
+            background: var(--surface-color);
+            padding: 20px;
+            border-radius: 8px;
         }
 
         .setting-group label {
@@ -270,9 +304,12 @@
             display: flex;
             gap: 12px;
             margin-top: 32px;
+            background: var(--surface-color);
+            padding: 20px;
+            border-radius: 8px;
         }
 
-        .refresh-btn, .theme-toggle {
+        .refresh-btn {
             flex: 1;
             padding: 16px;
             background: var(--accent-color);
@@ -287,15 +324,13 @@
             transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
-        .theme-toggle {
-            background: transparent;
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-        }
-
-        .refresh-btn:hover, .theme-toggle:hover {
+        .refresh-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 40px var(--shadow);
+        }
+        
+        .refresh-btn i {
+            margin-right: 6px;
         }
 
         /* Article Container */
@@ -377,6 +412,11 @@
                 top: 20px;
             }
             
+            .theme-toggle-btn {
+                right: 20px;
+                top: 20px;
+            }
+            
             .article-container {
                 padding: 80px 40px;
             }
@@ -391,6 +431,10 @@
                 max-width: 320px;
                 max-height: 60vh;
                 padding: 24px;
+                background: var(--surface-color);
+                border: 1px solid var(--border-color);
+                box-shadow: 0 32px 80px var(--shadow);
+                backdrop-filter: blur(40px);
             }
             
             .settings-panel.visible {
@@ -400,10 +444,16 @@
             .settings-panel h2 {
                 margin-bottom: 20px;
                 font-size: 16px;
+                background: var(--surface-color);
+                padding: 16px;
+                border-radius: 8px;
             }
             
             .setting-group {
                 margin-bottom: 20px;
+                background: var(--surface-color);
+                padding: 16px;
+                border-radius: 8px;
             }
             
             .setting-group label {
@@ -422,11 +472,73 @@
             
             .control-buttons {
                 margin-top: 20px;
+                background: var(--surface-color);
+                padding: 16px;
+                border-radius: 8px;
             }
             
-            .refresh-btn, .theme-toggle {
+            .refresh-btn {
                 padding: 12px;
                 font-size: 9px;
+            }
+            
+            .refresh-btn i {
+                margin-right: 4px;
+            }
+            
+            /* Mobile slider focus - use transparency to maintain layout */
+            .settings-panel.mobile-slider-focus {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+                scrollbar-width: none; /* Firefox */
+                -ms-overflow-style: none; /* Internet Explorer 10+ */
+                transition: none !important;
+            }
+            
+            /* Hide webkit scrollbar in focus mode */
+            .settings-panel.mobile-slider-focus::-webkit-scrollbar {
+                display: none;
+            }
+            
+            .settings-panel.mobile-slider-focus .setting-group {
+                opacity: 0;
+                transition: none !important;
+            }
+            
+            .settings-panel.mobile-slider-focus .setting-group.active {
+                opacity: 1;
+                transition: none !important;
+            }
+            
+            .settings-panel.mobile-slider-focus h2,
+            .settings-panel.mobile-slider-focus .control-buttons {
+                opacity: 0;
+                transition: none !important;
+            }
+            
+            /* Disable all transitions in focus mode */
+            .settings-panel.mobile-slider-focus *,
+            .settings-panel.mobile-slider-focus *:before,
+            .settings-panel.mobile-slider-focus *:after {
+                transition: none !important;
+                animation: none !important;
+            }
+            
+            /* Hide focus settings when focus mode is off */
+            .focus-settings {
+                display: none;
+                transition: opacity 0.3s ease-out;
+            }
+            
+            .focus-settings.visible {
+                display: block;
+            }
+            
+            .theme-toggle-btn {
+                right: 20px;
+                top: 20px;
             }
             
             .article-container {
@@ -446,6 +558,10 @@
         
         <div class="menu-toggle" id="menu-toggle">
             <span></span>
+        </div>
+        
+        <div class="theme-toggle-btn" id="theme-toggle-btn">
+            <i class="bi bi-sun-fill" id="theme-icon"></i>
         </div>
         
         <div class="settings-panel" id="settings-panel">
@@ -498,27 +614,28 @@
                 </select>
             </div>
 
-            <div class="setting-group">
+            <div class="setting-group focus-settings">
                 <label for="focus-intensity">Dimming Intensity</label>
                 <input type="range" id="focus-intensity" class="range-slider" min="0" max="100" value="30" step="5">
                 <div class="range-value" id="focus-intensity-value">30%</div>
             </div>
 
-            <div class="setting-group">
+            <div class="setting-group focus-settings">
                 <label for="focus-position">Focus Position</label>
                 <input type="range" id="focus-position" class="range-slider" min="10" max="90" value="30" step="5">
-                <div class="range-value" id="focus-position-value">Center</div>
+                <div class="range-value" id="focus-position-value">Upper</div>
             </div>
 
-            <div class="setting-group">
+            <div class="setting-group focus-settings">
                 <label for="focus-height">Focus Height</label>
                 <input type="range" id="focus-height" class="range-slider" min="1" max="15" value="3" step="1">
                 <div class="range-value" id="focus-height-value">3 Lines</div>
             </div>
 
             <div class="control-buttons">
-                <button class="refresh-btn" id="refresh-btn">New Article</button>
-                <button class="theme-toggle" id="theme-toggle">Dark Mode</button>
+                <button class="refresh-btn" id="refresh-btn">
+                    <i class="bi bi-shuffle"></i> New Article
+                </button>
             </div>
         </div>
 
@@ -646,6 +763,10 @@
         let focusHeight = 3;
         let isScrolling = false;
 
+        // Mobile slider focus variables
+        let mobileSliderTimeout = null;
+        let isMobile = window.innerWidth <= 768;
+
         // Settings functionality
         function updateFontSize() {
             const value = document.getElementById('font-size').value;
@@ -719,6 +840,26 @@
         // Focus mode functionality
         function updateFocusMode() {
             focusMode = document.getElementById('focus-mode').value;
+            
+            // Show/hide focus settings based on mode
+            const focusSettings = document.querySelectorAll('.focus-settings');
+            const overlayTop = document.getElementById('focus-overlay-top');
+            const overlayBottom = document.getElementById('focus-overlay-bottom');
+            
+            if (focusMode === 'on') {
+                focusSettings.forEach(setting => {
+                    setting.classList.add('visible');
+                });
+            } else {
+                focusSettings.forEach(setting => {
+                    setting.classList.remove('visible');
+                });
+                
+                // Explicitly remove overlays when turning focus mode off
+                overlayTop.classList.remove('active');
+                overlayBottom.classList.remove('active');
+            }
+            
             updateFocusDisplay();
         }
 
@@ -754,6 +895,10 @@
             if (focusMode === 'off') {
                 overlayTop.classList.remove('active');
                 overlayBottom.classList.remove('active');
+                
+                // Clear all inline styles to ensure overlays are completely hidden
+                overlayTop.style.cssText = '';
+                overlayBottom.style.cssText = '';
                 return;
             }
 
@@ -801,9 +946,10 @@
             overlayTop.style.height = Math.max(0, focusTop) + 'px';
             overlayTop.style.opacity = opacity;
             
-            // Position and style bottom overlay
+            // Position and style bottom overlay (extend by 15% for mobile scroll issues)
+            const bottomExtension = viewportHeight * 0.15;
             overlayBottom.style.top = focusBottom + 'px';
-            overlayBottom.style.height = Math.max(0, viewportHeight - focusBottom) + 'px';
+            overlayBottom.style.height = Math.max(0, viewportHeight - focusBottom + bottomExtension) + 'px';
             overlayBottom.style.opacity = opacity;
             
             // Show overlays
@@ -818,6 +964,51 @@
             // The focus area doesn't move with content, so no scroll updates needed
         }
 
+        // Mobile slider focus functionality
+        function showOnlyActiveSetting(activeElement) {
+            if (!isMobile) return;
+            
+            const panel = document.getElementById('settings-panel');
+            const settingGroups = panel.querySelectorAll('.setting-group');
+            const activeGroup = activeElement.closest('.setting-group');
+            
+            panel.classList.add('mobile-slider-focus');
+            
+            settingGroups.forEach(group => {
+                group.classList.remove('active');
+            });
+            
+            if (activeGroup) {
+                activeGroup.classList.add('active');
+            }
+        }
+
+        function showAllSettings() {
+            const panel = document.getElementById('settings-panel');
+            panel.classList.remove('mobile-slider-focus');
+            
+            const settingGroups = panel.querySelectorAll('.setting-group');
+            settingGroups.forEach(group => {
+                group.classList.remove('active');
+            });
+        }
+
+        function handleSliderInput(element) {
+            if (!isMobile) return;
+            
+            showOnlyActiveSetting(element);
+            
+            // Clear existing timeout
+            if (mobileSliderTimeout) {
+                clearTimeout(mobileSliderTimeout);
+            }
+            
+            // Set new timeout to show all settings after 0.7 seconds of inactivity
+            mobileSliderTimeout = setTimeout(() => {
+                showAllSettings();
+            }, 700);
+        }
+
         // Menu toggle functionality
         function toggleMenu() {
             const panel = document.getElementById('settings-panel');
@@ -825,20 +1016,29 @@
             
             panel.classList.toggle('visible');
             toggle.classList.toggle('active');
+            
+            // Reset mobile slider focus when menu is toggled
+            if (isMobile) {
+                showAllSettings();
+                if (mobileSliderTimeout) {
+                    clearTimeout(mobileSliderTimeout);
+                    mobileSliderTimeout = null;
+                }
+            }
         }
 
         // Theme toggle functionality
         function toggleTheme() {
             const body = document.body;
-            const button = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
             
             if (currentTheme === 'dark') {
                 body.setAttribute('data-theme', 'light');
-                button.textContent = 'Dark Mode';
+                themeIcon.className = 'bi bi-sun-fill';
                 currentTheme = 'light';
             } else {
                 body.removeAttribute('data-theme');
-                button.textContent = 'Light Mode';
+                themeIcon.className = 'bi bi-moon-fill';
                 currentTheme = 'dark';
             }
         }
@@ -875,22 +1075,55 @@
         }
 
         // Event listeners
-        document.getElementById('font-size').addEventListener('input', updateFontSize);
-        document.getElementById('word-spacing').addEventListener('input', updateWordSpacing);
-        document.getElementById('letter-spacing').addEventListener('input', updateLetterSpacing);
-        document.getElementById('line-height').addEventListener('input', updateLineHeight);
-        document.getElementById('boldness').addEventListener('input', updateBoldness);
+        document.getElementById('font-size').addEventListener('input', function() {
+            handleSliderInput(this);
+            updateFontSize();
+        });
+        document.getElementById('word-spacing').addEventListener('input', function() {
+            handleSliderInput(this);
+            updateWordSpacing();
+        });
+        document.getElementById('letter-spacing').addEventListener('input', function() {
+            handleSliderInput(this);
+            updateLetterSpacing();
+        });
+        document.getElementById('line-height').addEventListener('input', function() {
+            handleSliderInput(this);
+            updateLineHeight();
+        });
+        document.getElementById('boldness').addEventListener('input', function() {
+            handleSliderInput(this);
+            updateBoldness();
+        });
         document.getElementById('font-select').addEventListener('change', updateFont);
         document.getElementById('focus-mode').addEventListener('change', updateFocusMode);
-        document.getElementById('focus-intensity').addEventListener('input', updateFocusIntensity);
-        document.getElementById('focus-position').addEventListener('input', updateFocusPosition);
-        document.getElementById('focus-height').addEventListener('input', updateFocusHeight);
+        document.getElementById('focus-intensity').addEventListener('input', function() {
+            handleSliderInput(this);
+            updateFocusIntensity();
+        });
+        document.getElementById('focus-position').addEventListener('input', function() {
+            handleSliderInput(this);
+            updateFocusPosition();
+        });
+        document.getElementById('focus-height').addEventListener('input', function() {
+            handleSliderInput(this);
+            updateFocusHeight();
+        });
         document.getElementById('menu-toggle').addEventListener('click', toggleMenu);
         document.getElementById('refresh-btn').addEventListener('click', generateNewArticle);
-        document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+        document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
         
-        // Window resize listener for focus mode
+        // Window resize listener for focus mode and mobile detection
         window.addEventListener('resize', () => {
+            // Update mobile detection
+            isMobile = window.innerWidth <= 768;
+            
+            // Reset mobile slider focus on resize
+            if (!isMobile) {
+                showAllSettings();
+            }
+            
+            // Update focus display if active
             if (focusMode === 'on') {
                 updateFocusDisplay();
             }
@@ -922,6 +1155,10 @@
 
         // Initialize with first article and apply default settings
         generateNewArticle();
+        
+        // Initialize focus settings visibility and labels
+        updateFocusMode();
+        updateFocusPosition();
     </script>
 </body>
 </html>
